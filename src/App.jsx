@@ -666,6 +666,15 @@ const ScanScreen = ({ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraO
         'application/vnd.ms-excel': ['.xls']
     };
 
+    // State for pagination
+    const [visibleItemsCount, setVisibleItemsCount] = useState(100);
+
+    // Effect to reset pagination when search term or filter changes
+    useEffect(() => {
+        setVisibleItemsCount(100);
+    }, [searchTerm, warningFilter]);
+
+
     return (
         <>
             {isCameraOpen && isQrCodeReady && isCameraAllowed && <RobustBarcodeScanner onClose={() => setIsCameraOpen(false)} onScan={handleCameraScan} isPaused={warningModal.isOpen} />}
@@ -724,7 +733,7 @@ const ScanScreen = ({ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraO
                         </select>
                     </div>
                     <div className="flex-grow overflow-y-auto space-y-2 pr-2">
-                        {filteredScannedItems.map((item, index) => (
+                        {filteredScannedItems.slice(0, visibleItemsCount).map((item, index) => (
                             <div key={`${item.timestamp}-${index}`} className={`p-2 rounded-md border flex items-center justify-between gap-2 ${item.isValid ? 'bg-white' : 'bg-yellow-50'}`}>
                                 <div className="flex-grow">
                                     <p className="font-mono text-slate-800">{item.barcode}</p>
@@ -741,6 +750,14 @@ const ScanScreen = ({ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraO
                                 </div>
                             </div>
                         ))}
+                        {filteredScannedItems.length > visibleItemsCount && (
+                            <button
+                                onClick={() => setVisibleItemsCount(prev => prev + 100)}
+                                className="w-full mt-2 p-3 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300 font-semibold transition-colors"
+                            >
+                                Daha Fazla Yükle ({visibleItemsCount} / {filteredScannedItems.length})
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -986,6 +1003,7 @@ export default function App() {
     const [isCameraOpen, setIsCameraOpen] = useState(false);
     const [isProcessingScan, setIsProcessingScan] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(''); // State for the debounced search term
     const [warningFilter, setWarningFilter] = useState('all');
     const [isMuted, setIsMuted] = useState(false);
     const [installPrompt, setInstallPrompt] = useState(null);
@@ -1131,6 +1149,18 @@ export default function App() {
     useEffect(() => {
         localStorage.setItem('isMuted', isMuted);
     }, [isMuted]);
+
+    // Debounce effect for search input
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300); // 300ms delay
+
+        // Cleanup function to clear the timeout
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [searchTerm]); // Re-run effect only when searchTerm changes
 
     const playSound = useCallback((note) => {
         if (isMuted) return;
@@ -1702,7 +1732,11 @@ export default function App() {
     };
 
 
-    const filteredScannedItems = useMemo(() => scannedItems.filter(item => (searchTerm ? (item.barcode.includes(searchTerm) || String(item.data?.['eser_adi'] || '').toLowerCase().includes(searchTerm.toLowerCase())) : true) && (warningFilter === 'all' ? true : item.warnings.some(w => w.id === warningFilter))), [scannedItems, searchTerm, warningFilter]);
+    const filteredScannedItems = useMemo(() =>
+        scannedItems.filter(item =>
+            (debouncedSearchTerm ? (item.barcode.includes(debouncedSearchTerm) || String(item.data?.['eser_adi'] || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase())) : true) &&
+            (warningFilter === 'all' ? true : item.warnings.some(w => w.id === warningFilter))
+        ), [scannedItems, debouncedSearchTerm, warningFilter]);
 
     // --- Report Generation ---
     // Functions to generate and download reports in TXT and XLSX formats.
