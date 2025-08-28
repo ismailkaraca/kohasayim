@@ -134,6 +134,8 @@ const ICONS = {
     soundOn: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>,
     soundOff: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><line x1="15" y1="9" x2="21" y2="15"/><line x1="21" y1="9" x2="15" y2="15"/></svg>,
     share: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>,
+    install: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>,
+    merge: <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 4v16m4-16v16M17 21l-5-5-5 5M17 3l-5 5-5-5"/></svg>,
 };
 
 // --- Mappings for Report Generation ---
@@ -258,12 +260,13 @@ const PermissionScreen = ({ onDecision }) => {
     );
 };
 
-const Sidebar = ({ page, setPage, currentSessionName, selectedLibrary, kohaData, scannedItems, isMuted, setIsMuted, isMobileMenuOpen, setMobileMenuOpen, onShare }) => {
+const Sidebar = ({ page, setPage, currentSessionName, selectedLibrary, kohaData, scannedItems, isMuted, setIsMuted, isMobileMenuOpen, setMobileMenuOpen, onShare, onInstall, installPrompt }) => {
     const navItems = [
         { id: 'start', label: 'Yeni Sayım', disabled: false },
         { id: 'pre-reports', label: 'Ön Raporlar', disabled: !currentSessionName || kohaData.length === 0 },
         { id: 'scan', label: 'Sayım', disabled: !selectedLibrary || kohaData.length === 0 },
-        { id: 'summary', label: 'Özet & Raporlar', disabled: !selectedLibrary || kohaData.length === 0 || scannedItems.length === 0 }
+        { id: 'summary', label: 'Özet & Raporlar', disabled: !selectedLibrary || kohaData.length === 0 || scannedItems.length === 0 },
+        { id: 'merge', label: 'Düşüm Birleştir', disabled: false }
     ];
 
     const handleLinkClick = (pageId) => {
@@ -302,6 +305,12 @@ const Sidebar = ({ page, setPage, currentSessionName, selectedLibrary, kohaData,
                         <button onClick={onShare} className="p-2 rounded-full text-slate-500 hover:bg-slate-200" title="Uygulamayı Paylaş">{ICONS.share}</button>
                         <span className="text-xs text-slate-500 mt-1">Paylaş</span>
                     </div>
+                    {installPrompt && (
+                        <div className="flex flex-col items-center">
+                            <button onClick={onInstall} className="p-2 rounded-full text-slate-500 hover:bg-slate-200" title="Uygulamayı Yükle">{ICONS.install}</button>
+                            <span className="text-xs text-slate-500 mt-1">Yükle</span>
+                        </div>
+                    )}
                 </div>
                 <div className="p-3 border-t border-slate-200 text-[11px] text-slate-500 space-y-2 text-center">
                     <p>Geliştirici: <a href="https://ismailkaraca.com.tr" target="_blank" rel="noopener noreferrer" className="underline hover:text-slate-700">İsmail KARACA</a></p>
@@ -353,6 +362,22 @@ const ShareModal = ({ isOpen, onClose }) => {
         </Modal>
     );
 };
+
+const InstallPopup = ({ onInstall, onDismiss }) => (
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 w-11/12 max-w-md bg-slate-800 text-white p-4 rounded-lg shadow-2xl z-50 flex items-center gap-4">
+        <div className="flex-shrink-0">
+            {ICONS.install}
+        </div>
+        <div className="flex-grow">
+            <h4 className="font-bold">Uygulamayı Ana Ekrana Ekleyin</h4>
+            <p className="text-sm text-slate-300">Daha hızlı erişim ve çevrimdışı kullanım için yükleyin.</p>
+        </div>
+        <div className="flex-shrink-0 flex gap-2">
+             <button onClick={onDismiss} className="px-3 py-1 text-sm rounded-md hover:bg-slate-700">Kapat</button>
+             <button onClick={onInstall} className="px-4 py-2 text-sm font-bold bg-indigo-600 rounded-md hover:bg-indigo-700">Yükle</button>
+        </div>
+    </div>
+);
 
 const StartScreen = ({ sessions, sessionNameInput, setSessionNameInput, startNewSession, error, setError, loadSession, deleteSession, selectedLibrary, setSelectedLibrary, libraryOptions, setAddDataModal, selectedLocation, setSelectedLocation, locationOptions, kohaData, handleExcelUpload, isXlsxReady, isLoading }) => (
     <div className="w-full">
@@ -584,6 +609,106 @@ const SummaryScreen = ({ currentSessionName, summaryData, preAnalysisReports, po
     );
 };
 
+const MergeScreen = () => {
+    const [uploadedFiles, setUploadedFiles] = useState([]);
+
+    const onDrop = useCallback(acceptedFiles => {
+        const fileReadPromises = acceptedFiles.map(file => 
+            new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const text = e.target.result;
+                    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+                    resolve({ name: file.name, barcodes: lines });
+                };
+                reader.onerror = (error) => reject(error);
+                reader.readAsText(file);
+            })
+        );
+
+        Promise.all(fileReadPromises).then(newFiles => {
+            setUploadedFiles(prevFiles => {
+                const existingFileNames = new Set(prevFiles.map(f => f.name));
+                const uniqueNewFiles = newFiles.filter(f => !existingFileNames.has(f.name));
+                return [...prevFiles, ...uniqueNewFiles];
+            });
+        }).catch(error => console.error("Dosya okunurken hata oluştu:", error));
+    }, []);
+
+    const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+        onDrop, 
+        multiple: true, 
+        accept: { 'text/plain': ['.txt'] } 
+    });
+
+    const mergedBarcodes = useMemo(() => {
+        const allBarcodes = uploadedFiles.flatMap(file => file.barcodes);
+        return [...new Set(allBarcodes)];
+    }, [uploadedFiles]);
+
+    const downloadTxt = (data, filename) => {
+        const blob = new Blob([data], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleDownload = () => {
+        const data = mergedBarcodes.join('\n');
+        downloadTxt(data, 'birlesik_dusum_listesi.txt');
+    };
+    
+    const handleClearFiles = () => {
+        setUploadedFiles([]);
+    };
+
+    return (
+        <div className="w-full">
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">Düşüm Dosyalarını Birleştir</h1>
+            <p className="text-slate-600 mb-8">Farklı sayımlar sonucu oluşturulmuş "Düşüm İşlemi İçin Barkodlar (Eksikler)" dosyalarını (.txt) tek seferde yükleyerek birleştirilmiş ve tekilleştirilmiş yeni bir liste oluşturun.</p>
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+                <h2 className="text-xl font-semibold mb-4 text-slate-700">Düşüm Dosyalarını Yükle</h2>
+                <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:border-blue-400'}`}>
+                    <input {...getInputProps()} />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h10a4 4 0 014 4v5m-4 4h-5m5-4l-5 4m0 0l-5-4m5 4v-7" /></svg>
+                    <p className="mt-2 text-slate-500">Dosyaları buraya sürükleyin veya seçmek için tıklayın (.txt)</p>
+                    <p className="text-xs text-slate-400">Aynı anda birden fazla dosya seçebilirsiniz.</p>
+                </div>
+                {uploadedFiles.length > 0 && (
+                    <div className="mt-6">
+                        <h3 className="font-semibold text-slate-700">Yüklenen Dosyalar:</h3>
+                        <ul className="mt-2 space-y-2 max-h-48 overflow-y-auto pr-2">
+                            {uploadedFiles.map((file, index) => (
+                                <li key={index} className="text-sm text-slate-600 bg-slate-50 p-2 rounded-md">
+                                    <span className="font-semibold">{file.name}</span> ({file.barcodes.length} barkod)
+                                </li>
+                            ))}
+                        </ul>
+                        <button onClick={handleClearFiles} className="text-sm text-red-600 hover:underline mt-2">Listeyi Temizle</button>
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border">
+                <h2 className="text-xl font-semibold mb-4 text-slate-700">Sonuç</h2>
+                <div className="flex items-center justify-between p-4 bg-slate-100 rounded-lg">
+                    <p className="text-lg">Toplam Tekil Barkod Sayısı: <span className="font-bold text-2xl text-slate-800">{mergedBarcodes.length}</span></p>
+                    <button onClick={handleDownload} disabled={mergedBarcodes.length === 0} className="flex items-center gap-2 bg-green-600 text-white font-semibold px-6 py-3 rounded-md hover:bg-green-700 disabled:bg-slate-400 transition-colors">
+                        {ICONS.download} Birleştirilmiş Listeyi İndir
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 export default function App() {
     const isXlsxReady = useScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', 'XLSX');
     const isQrCodeReady = useScript('https://unpkg.com/html5-qrcode', 'Html5Qrcode');
@@ -619,6 +744,8 @@ export default function App() {
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
     const [warningFilter, setWarningFilter] = useState('all');
     const [isMuted, setIsMuted] = useState(false);
+    const [installPrompt, setInstallPrompt] = useState(null);
+    const [showInstallPopup, setShowInstallPopup] = useState(false);
     const [isNavigatingToSummary, setIsNavigatingToSummary] = useState(false);
     const [isRestoringSession, setIsRestoringSession] = useState(false);
     
@@ -629,6 +756,38 @@ export default function App() {
         const handler = setTimeout(() => { setDebouncedSearchTerm(searchTerm); }, 300);
         return () => { clearTimeout(handler); };
     }, [searchTerm]);
+
+    // Re-added PWA setup effect
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e) => {
+            e.preventDefault();
+            setInstallPrompt(e);
+            if (!localStorage.getItem('installPopupDismissed')) {
+                setShowInstallPopup(true);
+            }
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
+
+    const handleInstallClick = () => {
+        if (!installPrompt) return;
+        setShowInstallPopup(false);
+        installPrompt.prompt();
+        installPrompt.userChoice.then((choice) => {
+            if (choice.outcome === 'accepted') console.log('User accepted the install prompt');
+            else console.log('User dismissed the install prompt');
+            setInstallPrompt(null);
+        });
+    };
+    
+    const handleDismissInstallPopup = () => {
+        setShowInstallPopup(false);
+        localStorage.setItem('installPopupDismissed', 'true');
+    };
 
     const playSound = useCallback((note) => {
         if (isMuted) return;
@@ -937,7 +1096,7 @@ export default function App() {
     const POST_SCAN_REPORTS_CONFIG = useMemo(() => [ { id: 'writeOff', title: 'Düşüm İşlemi İçin Barkodlar (Eksikler)', format: '.txt', icon: ICONS.writeOff, description: "Bu dosya, Koha Materyal Düzeltme/Düşüm Modülü'ne yüklenerek materyallerin topluca düşümünü sağlar.", links: [{ text: 'Koha Düşüm Modülü', url: 'https://personel.ekutuphane.gov.tr/cgi-bin/koha/tools/batchMod.pl' }], notes: ['Sadece Müdür/Yönetici yetkisine sahip personel erişebilir.', 'Yetkisi olmayanlar koha@ktb.gov.tr adresinden talep edebilir.'], generator: () => { const scannedBarcodes = new Set(scannedItems.filter(i => !i.warnings.some(w => w.id === 'duplicate')).map(i => i.barcode)); const missingBarcodes = kohaData.filter(i => String(i['materyal_statusu_kodu']) === '0' && !scannedBarcodes.has(String(i.barkod))).map(i => String(i.barkod).slice(0, 12)); downloadTxt(missingBarcodes.join('\n'), `sayim_sonucu_dusum_icin_eksik_barkodlar_${currentSessionName}.txt`); } }, { id: 'missing', title: 'Eksik Materyaller', format: '.xlsx', icon: ICONS.missing, description: 'Sayım sırasında hiç okutulmamış olan, kütüphane koleksiyonuna ait materyallerin listesi.', generator: () => { const scannedBarcodes = new Set(scannedItems.filter(i => !i.warnings.some(w => w.id === 'duplicate')).map(i => i.barcode)); const missingItems = kohaData.filter(i => String(i['materyal_statusu_kodu']) === '0' && !scannedBarcodes.has(String(i.barkod))); downloadXlsx(transformReportData(missingItems), `sayim_sonucu_eksik_materyaller_${currentSessionName}.xlsx`); } }, { id: 'duplicateScans', title: 'Tekrar Okutulan Barkodlar', format: '.xlsx', icon: ICONS.all, description: 'Sayım sırasında birden fazla kez okutulan tüm barkodların listesi. Bu rapor, hem koleksiyon listesinde olan hem de olmayan tekrar okutulmuş barkodları içerir.', generator: () => { const barcodeCounts = scannedItems.reduce((acc, item) => { acc[item.barcode] = (acc[item.barcode] || 0) + 1; return acc; }, {}); const duplicates = Object.entries(barcodeCounts).filter(([, count]) => count > 1).map(([barcode, count]) => { const itemData = kohaDataMap.get(barcode); const firstInstance = scannedItems.find(item => item.barcode === barcode); const wrongLibWarning = firstInstance.warnings.find(w => w.id === 'wrongLibrary'); return { 'Barkod': barcode, 'Tekrar Sayısı': count, 'Eser Adı': itemData?.['eser_adi'] || 'Bilinmiyor', 'Farklı Kütüphane Adı': wrongLibWarning?.libraryName || '' }; }); downloadXlsx(duplicates, `sayim_sonucu_tekrar_okutulanlar_${currentSessionName}.xlsx`); } }, { id: 'invalidStructure', title: '❗ Yapıya Uygun Olmayan Barkodlar (Okutulanlar)', format: '.xlsx', icon: ICONS.status, description: 'Sayım sırasında okutulan ve barkod yapısı bilinen hiçbir kütüphane koduna uymayan barkodlar.', generator: () => { const data = scannedItems.filter(i => i.warnings.some(w => w.id === 'invalidStructure')).map(i => ({ Hatalı_Barkod: i.barcode })); downloadXlsx(data, `sayim_sonucu_yapiya_uygun_olmayanlar_${currentSessionName}.xlsx`); } }, { id: 'deletedScanned', title: '❗ Listede Olmayan ve Sayımı Yapılan Barkodlar', format: '.xlsx', icon: ICONS.status, description: 'Sayım sırasında okutulan ancak Koha\'dan indirilen listede bulunamayan barkodlar (muhtemelen sistemden silinmiş veya hatalı girilmiş).', generator: () => { const data = scannedItems.filter(i => i.warnings.some(w => w.id === 'deleted' || w.id === 'autoCompletedNotFound')).map(i => ({ Barkod: i.barcode, 'Not': 'Okutuldu, listede bulunamadı' })); downloadXlsx(data, `sayim_sonucu_listede_olmayan_okutulanlar_${currentSessionName}.xlsx`); } }, { id: 'allResults', title: 'Tüm Sayım Sonuçları (Uyarılar Dahil)', format: '.xlsx', icon: ICONS.all, description: 'Sayım boyunca okutulan tüm materyallerin, aldıkları uyarılarla birlikte tam listesi.', generator: () => { const data = scannedItems.map(i => { const itemData = kohaDataMap.get(i.barcode); const wrongLibWarning = i.warnings.find(w => w.id === 'wrongLibrary'); const transformedKohaData = itemData ? transformReportData([itemData])[0] : {}; return { Barkod: i.barcode, 'Eser Adı': itemData?.['eser_adi'] || '', Uyarılar: i.warnings.map(w => w.message || w.text).join(', ') || 'Temiz', 'Farklı Kütüphane Adı': wrongLibWarning?.libraryName || '', ...transformedKohaData }; }); downloadXlsx(data, `sayim_sonucu_tum_sonuclar_${currentSessionName}.xlsx`); } }, { id: 'cleanList', title: 'Temiz Liste (Uyarısız Okutulanlar)', format: '.xlsx', icon: ICONS.clean, description: 'Sayım sırasında okutulan ve hiçbir uyarı almayan, durumu ve konumu doğru olan materyallerin listesi.', generator: () => { const data = scannedItems.filter(i => i.isValid).map(i => kohaDataMap.get(i.barcode)); downloadXlsx(transformReportData(data), `sayim_sonucu_temiz_liste_${currentSessionName}.xlsx`); } }, { id: 'wrongLibrary', title: 'Kütüphanenize Ait Olmayan ve Okutulan Barkodlar', format: '.xlsx', icon: ICONS.wrongLib, description: 'Sayım sırasında okutulan ancak sayım yapılan kütüphaneye ait olmayan (farklı şube koduna sahip) materyaller.', generator: () => { const data = scannedItems.filter(i => i.warnings.some(w => w.id === 'wrongLibrary')).map(i => { const wrongLibWarning = i.warnings.find(w => w.id === 'wrongLibrary'); return { 'Barkod': i.barcode, 'Ait Olduğu Kütüphane': wrongLibWarning?.libraryName || 'Bilinmiyor' }; }); downloadXlsx(data, `sayim_sonucu_kutuphane_disi_${currentSessionName}.xlsx`); } }, { id: 'locationMismatch', title: 'Yer Uyumsuzları (Okutulanlar)', format: '.xlsx', icon: ICONS.location, description: 'Sayım sırasında, başlangıçta seçilen lokasyon dışında bir yerde okutulan materyaller.', generator: () => { const data = scannedItems.filter(i => i.warnings.some(w => w.id === 'locationMismatch')).map(i => kohaDataMap.get(i.barcode)); downloadXlsx(transformReportData(data), `sayim_sonucu_yer_uyumsuz_${currentSessionName}.xlsx`); } }, ], [kohaData, scannedItems, currentSessionName, isXlsxReady, combinedLibraries, kohaDataMap]);
     const summaryData = useMemo(() => { if (kohaData.length === 0) return null; const STATUS_MAP = { '0': 'Eser Koleksiyonda', '1': 'Düşüm Yapıldı', '2': 'Devir Yapıldı' }; const materialStatusCounts = kohaData.reduce((acc, item) => { const statusName = STATUS_MAP[String(item['materyal_statusu_kodu'])] || `Bilinmeyen Statü (${item['materyal_statusu_kodu']})`; acc[statusName] = (acc[statusName] || 0) + 1; return acc; }, {}); const materialStatusPieData = Object.entries(materialStatusCounts).map(([name, value]) => ({ name, value })); const warningCounts = scannedItems.flatMap(item => item.warnings).reduce((acc, warning) => { acc[warning.id] = (acc[warning.id] || 0) + 1; return acc; }, {}); const warningBarData = Object.entries(warningCounts).map(([id, count]) => ({ name: WARNING_DEFINITIONS[id]?.text || id, Sayı: count })); const scanProgress = scannedItems.reduce((acc, item) => { const hour = new Date(item.timestamp).getHours().toString().padStart(2, '0') + ':00'; acc[hour] = (acc[hour] || 0) + 1; return acc; }, {}); const scanProgressData = Object.entries(scanProgress).map(([time, count]) => ({ time, 'Okutulan Sayısı': count })).sort((a,b) => a.time.localeCompare(b.time)); const topErrorLocations = scannedItems.filter(i => !i.isValid).reduce((acc, item) => { const itemData = kohaDataMap.get(item.barcode); const loc = itemData?.['materyalin_yeri_kodu'] || 'Bilinmeyen'; acc[loc] = (acc[loc] || 0) + 1; return acc; }, {}); const topErrorLocationsData = Object.entries(topErrorLocations).map(([name, count]) => ({ name, 'Hata Sayısı': count })).sort((a, b) => b['Hata Sayısı'] - a['Hata Sayısı']).slice(0, 10); let scanSpeed = 0; if(scannedItems.length > 1){ const firstScanTime = new Date(scannedItems[scannedItems.length - 1].timestamp).getTime(); const lastScanTime = new Date(scannedItems[0].timestamp).getTime(); const durationMinutes = (lastScanTime - firstScanTime) / (1000 * 60); scanSpeed = durationMinutes > 0 ? Math.round(scannedItems.length / durationMinutes) : "∞"; } const activeKohaData = kohaData.filter(item => String(item['materyal_statusu_kodu']) === '0'); const uniqueScannedItems = [...new Map(scannedItems.map(item => [item.barcode, item])).values()]; const activeScannedItems = uniqueScannedItems.filter(item => kohaDataMap.has(item.barcode) && String(kohaDataMap.get(item.barcode)['materyal_statusu_kodu']) === '0'); const valid = activeScannedItems.filter(item => item.isValid).length; const invalid = activeScannedItems.length - valid; const notScannedCount = activeKohaData.length - activeScannedItems.length; const pieData = [ { name: 'Geçerli', value: valid }, { name: 'Uyarılı', value: invalid }, { name: 'Eksik', value: notScannedCount > 0 ? notScannedCount : 0 } ]; const locationStatus = {}; activeKohaData.forEach(item => { const loc = item['materyalin_yeri_kodu'] || 'Bilinmeyen'; if(!locationStatus[loc]) locationStatus[loc] = { 'Geçerli': 0, 'Uyarılı': 0, 'Eksik': 0 }; }); activeScannedItems.forEach(item => { const itemData = kohaDataMap.get(item.barcode); const loc = itemData?.['materyalin_yeri_kodu'] || 'Bilinmeyen'; if(!locationStatus[loc]) locationStatus[loc] = { 'Geçerli': 0, 'Uyarılı': 0, 'Eksik': 0 }; if(item.isValid) locationStatus[loc]['Geçerli']++; else locationStatus[loc]['Uyarılı']++; }); const scannedActiveKohaBarcodes = new Set(activeScannedItems.map(i => i.barcode)); activeKohaData.forEach(item => { const loc = item['materyalin_yeri_kodu'] || 'Bilinmeyen'; if(!scannedActiveKohaBarcodes.has(String(item.barkod))) { locationStatus[loc]['Eksik']++; } }); const locationStatusData = Object.entries(locationStatus).map(([name, data]) => ({ name, ...data })); return { totalScanned: scannedItems.length, valid, invalid, notScannedCount, scanSpeed, pieData, warningBarData, scanProgressData, locationStatusData, topErrorLocationsData, materialStatusPieData }; }, [scannedItems, kohaData, kohaDataMap]);
     
-    const pageTitles = { start: 'Yeni Sayım', 'pre-reports': 'Ön Raporlar', scan: 'Sayım', 'update-on-loan': 'Güncel Ödünçleri Yükle', summary: 'Özet & Raporlar', permission: 'Kamera İzni' };
+    const pageTitles = { start: 'Yeni Sayım', 'pre-reports': 'Ön Raporlar', scan: 'Sayım', 'update-on-loan': 'Güncel Ödünçleri Yükle', summary: 'Özet & Raporlar', permission: 'Kamera İzni', merge: 'Düşüm Birleştir' };
     const MobileHeader = ({ onMenuClick, pageTitle }) => (<header className="md:hidden bg-white shadow-md p-4 flex items-center justify-between sticky top-0 z-20"><button onClick={onMenuClick} className="p-2 text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><h2 className="text-lg font-bold text-slate-800">{pageTitle}</h2><div className="w-8"></div></header>);
     const renderPageContent = () => {
         switch (page) {
@@ -946,6 +1105,7 @@ export default function App() {
             case 'update-on-loan': return <UpdateOnLoanScreen {...{ handleOnLoanUpload, setPage, isXlsxReady, isLoading: isBulkLoading || isNavigatingToSummary }} />;
             case 'summary': return <SummaryScreen {...{ currentSessionName, summaryData, preAnalysisReports: PRE_ANALYSIS_REPORTS_CONFIG, postScanReports: POST_SCAN_REPORTS_CONFIG, isXlsxReady, isHtmlToImageReady }} />;
             case 'scan': return <ScanScreen {...{ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraOpen, handleCameraScan, warningModal, currentSessionName, combinedLibraries, selectedLibrary, combinedLocations, selectedLocation, barcodeInput, handleBarcodeInput, handleManualEntry, lastScanned, handleBulkUpload, isBulkLoading, setPage, scannedItems, filteredScannedItems, searchTerm, setSearchTerm, warningFilter, setWarningFilter, handleDeleteItem, handleClearAllScans, fileUploaderKey, kohaDataMap }} />;
+            case 'merge': return <MergeScreen />;
             default: return null;
         }
     };
@@ -959,7 +1119,8 @@ export default function App() {
             <ConfirmationModal isOpen={confirmationModal.isOpen} onClose={() => setConfirmationModal({ isOpen: false, message: '', onConfirm: () => {} })} {...confirmationModal} />
             <AddDataModal isOpen={addDataModal.isOpen} onClose={() => setAddDataModal({isOpen: false, type: ''})} onAdd={handleAddCustomData} type={addDataModal.type} />
             <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} />
-            <Sidebar {...{ page, setPage, currentSessionName, selectedLibrary, kohaData, scannedItems, isMuted, setIsMuted, isMobileMenuOpen, setMobileMenuOpen, onShare: () => setIsShareModalOpen(true) }} />
+            {showInstallPopup && <InstallPopup onInstall={handleInstallClick} onDismiss={handleDismissInstallPopup} />}
+            <Sidebar {...{ page, setPage, currentSessionName, selectedLibrary, kohaData, scannedItems, isMuted, setIsMuted, isMobileMenuOpen, setMobileMenuOpen, onShare: () => setIsShareModalOpen(true), onInstall: handleInstallClick, installPrompt }} />
             <div className="md:ml-64 flex flex-col min-h-screen bg-slate-100">
                 {page !== 'permission' && (<MobileHeader onMenuClick={() => setMobileMenuOpen(true)} pageTitle={pageTitles[page]} />)}
                 <main className="flex-1">
