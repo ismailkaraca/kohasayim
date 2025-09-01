@@ -1899,7 +1899,7 @@ const StartScreen = ({ sessions, sessionNameInput, setSessionNameInput, startNew
                             </select>
                             <button onClick={()=> setAddDataModal({isOpen: true, type: 'library'})} className="px-3 bg-slate-200 rounded-md hover:bg-slate-300">Yeni Ekle</button>
                         </div>
-                        <div className="text-right"><a href="https://www.ismailkaraca.com.tr/kutuphanekod.html" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">Kütüphane Kod ve İsim Listesi için tıklayınız.</a></div>
+                      
                     </div>
                     <div>
                         <label htmlFor="location-select" className="block text-sm font-medium text-slate-700 mb-1">Bölüm/Materyalin Yeri (Opsiyonel)</label>
@@ -1911,7 +1911,7 @@ const StartScreen = ({ sessions, sessionNameInput, setSessionNameInput, startNew
                             <button onClick={()=> setAddDataModal({isOpen: true, type: 'location'})} className="px-3 bg-slate-200 rounded-md hover:bg-slate-300">Yeni Ekle</button>
                         </div>
                         <p className="text-xs text-slate-500 mt-1">Yer seçimi yaparsanız, sayım yaptığınız yerde olmayan materyallerle ilgili uyarı verilecektir.</p>
-                        <div className="text-right"><a href="https://www.ismailkaraca.com.tr/bolumkod.html" target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">Bölüm Kod ve İsim Listesi için tıklayınız.</a></div>
+                      
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-2">
