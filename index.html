@@ -18,31 +18,15 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-
-    import {useYbugApi} from 'ybug-react';
-
-function useUserConnection(props: {userId: string}) {
-    const YbugContext = useYbugApi();
-    const {data} = useUserDataFetching(props.userId);
-
-    const currentUser = data?.user;
-    React.useEffect(() => {
-        if (currentUser && YbugContext.Ybug) {
-            YbugContext.init({
-                feedback: {
-                    // Autofill feedback forms with user email and name
-                    email: currentUser.contact?.email ?? "",
-                    name: currentUser.full_name ?? "",
-                },
-                // Make ybug use the user language
-                language_override: currentUser.language,
-                // Add custom user infos
-                user: {
-                    email: currentUser.contact?.email ?? "",
-                    ...
-                },
-            });
-        }
-    }, [currentUser, YbugC
+<!-- Ybug code start (https://ybug.io) -->
+<script type='text/javascript'>
+(function() {
+    window.ybug_settings = {"id":"0qpd1aqtzqaf10brkxkt"};
+    var ybug = document.createElement('script'); ybug.type = 'text/javascript'; ybug.async = true;
+    ybug.src = 'https://widget.ybug.io/button/'+window.ybug_settings.id+'.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ybug, s);
+})();
+</script>
+<!-- Ybug code end -->
   </body>
 </html>
