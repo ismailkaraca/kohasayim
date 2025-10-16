@@ -105,6 +105,7 @@ const RobustBarcodeScanner = ({ onScan, onClose, isPaused }) => {
 
 
 // --- Data Constants & Icons ---
+
 const INITIAL_LIBRARIES = [
   ["12", "ADANA  İL HALK KÜTÜPHANESİ"]	,
 ["1530", "Adana Adalet Halk Kütüphanesi"]	,
@@ -1767,7 +1768,7 @@ const Sidebar = ({ page, setPage, currentSessionName, selectedLibrary, kohaData,
         { id: 'pre-reports', label: 'Ön Raporlar', disabled: !currentSessionName || kohaData.length === 0 },
         { id: 'scan', label: 'Sayım', disabled: !selectedLibrary || kohaData.length === 0 },
         { id: 'summary', label: 'Özet & Raporlar', disabled: !selectedLibrary || kohaData.length === 0 || scannedItems.length === 0 },
-        { id: 'merge', label: 'Düşüm Birleştir', disabled: false }
+        { id: 'merge', label: 'Düşüm İşlemi İçin Barkodlar (Eksikler) Dosyalarını Birleştir', disabled: false }
     ];
 
     const handleLinkClick = (pageId) => {
@@ -1880,7 +1881,11 @@ const InstallPopup = ({ onInstall, onDismiss }) => (
     </div>
 );
 
-const StartScreen = ({ sessions, sessionNameInput, setSessionNameInput, startNewSession, error, setError, loadSession, deleteSession, selectedLibrary, setSelectedLibrary, libraryOptions, setAddDataModal, selectedLocation, setSelectedLocation, locationOptions, kohaData, handleExcelUpload, isXlsxReady, isLoading }) => (
+const StartScreen = ({ sessions, sessionNameInput, setSessionNameInput, startNewSession, error, setError, loadSession, deleteSession, selectedLibrary, setSelectedLibrary, libraryOptions, setAddDataModal, selectedLocation, setSelectedLocation, locationOptions, kohaData, handleCsvUpload, isPapaParseReady, isLoading }) => {
+    const isReadyToName = selectedLibrary && kohaData.length > 0;
+    const isButtonDisabled = !sessionNameInput || !isReadyToName;
+
+    return (
     <div className="w-full">
         <h1 className="text-3xl font-bold text-slate-800 mb-2">Hoş Geldiniz</h1>
         <p className="text-slate-600 mb-8">Yeni bir sayım başlatın veya kayıtlı bir oturuma devam edin.</p>
@@ -1889,7 +1894,6 @@ const StartScreen = ({ sessions, sessionNameInput, setSessionNameInput, startNew
                 <h2 className="text-2xl font-semibold mb-4 text-slate-700">Yeni Sayım Başlat</h2>
                 {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-4" role="alert"><p>{error}</p></div>}
                 <div className="space-y-4">
-                    <input type="text" value={sessionNameInput} onChange={e => {setSessionNameInput(e.target.value); setError('')}} placeholder="Yeni sayım için bir isim girin (örn: Yetişkin Bölümü)" className="w-full p-3 border border-slate-300 rounded-md shadow-sm focus:ring-slate-500 focus:border-slate-500" />
                     <div>
                         <label htmlFor="library-select" className="block text-sm font-medium text-slate-700 mb-1">Kütüphanenizi Seçin</label>
                         <div className="flex gap-2">
@@ -1915,12 +1919,30 @@ const StartScreen = ({ sessions, sessionNameInput, setSessionNameInput, startNew
                     </div>
                     <div>
                         <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-sm font-medium text-slate-700">Koha'dan Aldığınız Sayım İçin Hazırlanmış Dosya (.xlsx)</h3>
-                        <a href="https://www.ismailkaraca.com.tr/sayimdosyasi.html" target="_blank" rel="noopener noreferrer" className="px-2 py-1 text-xs bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">Sayım için materyal dosyasını indirmek için tıklayınız.</a>
+                        <h3 className="text-sm font-medium text-slate-700">Koha'dan Aldığınız Sayım İçin Hazırlanmış Dosya (.csv)</h3>
+                        <a href="https://personel.ekutuphane.gov.tr/cgi-bin/koha/reports/mir_envanter.pl" target="_blank" rel="noopener noreferrer" className="px-2 py-1 text-xs bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">Sayım için materyal dosyasını indirmek için tıklayınız.</a>
                         </div>
-                        <FileUploader onFileAccepted={(files) => handleExcelUpload(files[0])} title={kohaData.length > 0 ? `${kohaData.length} kayıt yüklendi.` : "Dosyayı buraya sürükleyin veya seçmek için tıklayın"} disabled={!isXlsxReady || isLoading} accept={{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'], 'application/vnd.ms-excel': ['.xls']}}><svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg></FileUploader>
+                        <FileUploader onFileAccepted={(files) => handleCsvUpload(files[0])} title={kohaData.length > 0 ? `${kohaData.length} kayıt yüklendi.` : "Dosyayı buraya sürükleyin veya seçmek için tıklayın"} disabled={!isPapaParseReady || isLoading} accept={{'text/csv': ['.csv']}}><svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg></FileUploader>
                     </div>
-                    <button onClick={startNewSession} disabled={!sessionNameInput || !selectedLibrary || kohaData.length === 0} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700 disabled:bg-slate-400">Sayıma Başla</button>
+                     <div>
+                        <input 
+                            type="text" 
+                            value={sessionNameInput} 
+                            onChange={e => {setSessionNameInput(e.target.value); setError('')}} 
+                            placeholder="Yeni sayım için bir isim girin (örn: Yetişkin Bölümü)" 
+                            className={`w-full p-3 border rounded-md shadow-sm focus:ring-slate-500 focus:border-slate-500 transition-all ${
+                                isReadyToName && !sessionNameInput 
+                                ? 'border-red-400 ring-1 ring-red-400' 
+                                : 'border-slate-300'
+                            }`}
+                        />
+                        {isReadyToName && !sessionNameInput && (
+                            <p className="text-xs text-red-500 mt-1 pl-1">
+                                Sayıma başlamak için bir isim girmeniz gerekmektedir.
+                            </p>
+                        )}
+                    </div>
+                    <button onClick={startNewSession} disabled={isButtonDisabled} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700 disabled:bg-slate-400">Sayıma Başla</button>
                 </div>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -1929,16 +1951,17 @@ const StartScreen = ({ sessions, sessionNameInput, setSessionNameInput, startNew
             </div>
         </div>
     </div>
-);
+    );
+};
 
-const ReportCard = ({ report, isXlsxReady }) => (
+const ReportCard = ({ report, isReady }) => (
     <div key={report.id} className="bg-white border border-slate-200 rounded-lg p-4 transition-shadow hover:shadow-md">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4 flex-grow">
                 <div className="text-slate-600 flex-shrink-0 w-6 h-6">{report.icon}</div>
                 <div><h4 className="font-bold text-slate-800">{report.title}</h4><p className="text-sm text-slate-500">Format: {report.format}</p></div>
             </div>
-            <div className="flex-shrink-0 mt-2 sm:mt-0"><button onClick={report.generator} disabled={!isXlsxReady} className="flex items-center gap-2 bg-slate-700 text-white font-semibold px-4 py-2 rounded-md hover:bg-slate-800 disabled:bg-slate-400 transition-colors">{ICONS.download} İndir</button></div>
+            <div className="flex-shrink-0 mt-2 sm:mt-0"><button onClick={report.generator} disabled={!isReady} className="flex items-center gap-2 bg-slate-700 text-white font-semibold px-4 py-2 rounded-md hover:bg-slate-800 disabled:bg-slate-400 transition-colors">{ICONS.download} İndir</button></div>
         </div>
         <div className="mt-3 pt-3 border-t border-slate-200 text-sm text-slate-600 space-y-2">
             <p>{report.description}</p>
@@ -1953,18 +1976,22 @@ const PreReportsScreen = ({ currentSessionName, error, setPage, preAnalysisRepor
     <div className="max-w-3xl mx-auto w-full p-8 bg-white rounded-lg shadow-sm space-y-6 border">
         <h1 className="text-3xl font-bold text-slate-800">Ön Raporlar: "{currentSessionName}"</h1>
         {error && <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded" role="alert"><p>{error}</p></div>}
-        <button onClick={() => setPage('scan')} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700">Sayıma Devam Et</button>
+        <button onClick={() => setPage('check-returns')} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700">Sayıma Devam Et</button>
         <div className="mt-6 pt-6 border-t">
             <p className="text-sm text-slate-500 mb-4">Bu raporlar, yüklediğiniz dosyaya göre oluşturulmuştur ve sayım işleminden bağımsızdır. Koleksiyonunuzun mevcut durumu hakkında ön bilgi sağlarlar.</p>
-            <div className="space-y-4">{preAnalysisReports.map(report => (<ReportCard key={report.id} report={report} isXlsxReady={isXlsxReady} />))}</div>
+            <div className="space-y-4">{preAnalysisReports.map(report => (<ReportCard key={report.id} report={report} isReady={isXlsxReady} />))}</div>
         </div>
-        <button onClick={() => setPage('scan')} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700">Sayıma Devam Et</button>
+        <button onClick={() => setPage('check-returns')} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700">Sayıma Devam Et</button>
     </div>
 );
 
-const ScanScreen = ({ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraOpen, handleCameraScan, warningModal, currentSessionName, combinedLibraries, selectedLibrary, combinedLocations, selectedLocation, barcodeInput, handleBarcodeInput, handleManualEntry, lastScanned, handleBulkUpload, isBulkLoading, setPage, scannedItems, filteredScannedItems, searchTerm, setSearchTerm, warningFilter, setWarningFilter, handleDeleteItem, handleClearAllScans, fileUploaderKey, kohaDataMap }) => {
+const ScanScreen = ({ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraOpen, handleCameraScan, warningModal, currentSessionName, combinedLibraries, selectedLibrary, combinedLocations, selectedLocation, barcodeInput, handleBarcodeInput, handleManualEntry, lastScanned, handleBulkUpload, isBulkLoading, setPage, scannedItems, filteredScannedItems, searchTerm, setSearchTerm, warningFilter, setWarningFilter, handleDeleteItem, handleClearAllScans, fileUploaderKey, kohaDataMap, isXlsxReady }) => {
     const bulkUploadTitle = "Toplu barkod(12 veya 13 haneli) içeren not defteri(.txt) veya Excel(.xlsx) dosyası yüklemek için tıklayın";
-    const bulkUploadAccept = { 'text/plain': ['.txt'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'], 'application/vnd.ms-excel': ['.xls'] };
+    const bulkUploadAccept = {
+        'text/plain': ['.txt'],
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+        'application/vnd.ms-excel': ['.xls']
+    };
     const [visibleItemsCount, setVisibleItemsCount] = useState(100);
     useEffect(() => { setVisibleItemsCount(100); }, [searchTerm, warningFilter]);
 
@@ -1998,7 +2025,17 @@ const ScanScreen = ({ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraO
                             <p className="text-xs text-slate-500 text-center mt-2">"Sayımı Bitir"e tıkladığınızda; özet grafikler ve raporlar görüntülenir. Daha sonra menüden "Sayım" ekranına tekrar dönüş yapabilirsiniz.</p>
                         </div>
                         <div className="mt-4 space-y-2">
-                            <div><label className="font-semibold text-slate-700">Toplu Yükleme (.txt/.xlsx):</label><FileUploader key={fileUploaderKey} onFileAccepted={(files) => handleBulkUpload(files)} title={bulkUploadTitle} accept={bulkUploadAccept} disabled={isBulkLoading} multiple={true} /></div>
+                            <div>
+                                <label className="font-semibold text-slate-700">Toplu Yükleme (.txt/.xlsx):</label>
+                                <FileUploader
+                                    key={fileUploaderKey}
+                                    onFileAccepted={(files) => handleBulkUpload(files)}
+                                    title={bulkUploadTitle}
+                                    accept={bulkUploadAccept}
+                                    disabled={isBulkLoading || !isXlsxReady}
+                                    multiple={true}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2060,15 +2097,40 @@ const ScanScreen = ({ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraO
     );
 };
 
-const UpdateOnLoanScreen = ({ handleOnLoanUpload, setPage, isXlsxReady, isLoading }) => (
+const UpdateOnLoanScreen = ({ handleOnLoanUpload, setPage, isPapaParseReady, isLoading }) => (
     <div className="max-w-3xl mx-auto w-full p-8 bg-white rounded-lg shadow-sm space-y-6 border">
         <h1 className="text-3xl font-bold text-slate-800">Güncel Ödünç Verilmiş Materyalleri Yükle</h1>
-        <p className="text-slate-600 mb-4">Eğer sayım sırasında ödünç verme işlemi yapıldıysa, Koha'dan alacağınız güncel ödünç verilmiş materyallerin listesini (sadece barkodları içeren .txt veya .xlsx) buraya yükleyerek eksik listesinin daha doğru oluşturulmasını sağlayabilirsiniz.</p>
-        <a href="https://www.ismailkaraca.com.tr/gulcelodunc.html" target="_blank" rel="noopener noreferrer" className="w-full mb-2 inline-block text-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">Güncel Ödünç Listesi indirmek için tıklayınız</a>
-        <FileUploader onFileAccepted={(files) => handleOnLoanUpload(files[0])} title="Güncel ödünç listesini buraya sürükleyin veya seçmek için tıklayın" disabled={!isXlsxReady || isLoading} accept={{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'], 'application/vnd.ms-excel': ['.xls'], 'text/plain': ['.txt']}}><svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h10a4 4 0 014 4v5m-4 4h-5m5-4l-5 4m0 0l-5-4m5 4v-7" /></svg></FileUploader>
-        <div className="flex flex-col sm:flex-row gap-4 mt-4"><button onClick={() => setPage('summary')} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-slate-600 text-white hover:bg-slate-700">Bu Adımı Atla ve Raporları Gör</button></div>
+        <p className="text-slate-600 mb-2">Sayım sırasında ödünç verme işlemi yapıldıysa, Koha’da “Gecikmişler” modülüne girip “Şu anda ödünç verilmiş bulunan tüm materyalleri göster” seçeneğini seçtikten sonra ulaşacağınız güncel ödünç materyal listesini (yalnızca barkodları içeren .txt veya .csv formatında) buraya yükleyerek eksik listesinin daha doğru oluşturulmasını sağlayabilirsiniz.</p>
+        <p className="text-slate-600 mb-4">Sayım sırasında ödünç kitap verme işlemi yapmadıysanız bu adımı atlayabilirsiniz.</p>
+        <a href="https://personel.ekutuphane.gov.tr/cgi-bin/koha/circ/overdue.pl" target="_blank" rel="noopener noreferrer" className="w-full mb-2 inline-block text-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">Güncel Ödünç Listesi indirmek için tıklayınız</a>
+        <FileUploader onFileAccepted={(files) => handleOnLoanUpload(files[0])} title="Güncel ödünç listesini buraya sürükleyin veya seçmek için tıklayın" disabled={!isPapaParseReady || isLoading} accept={{'text/csv': ['.csv'], 'text/plain': ['.txt']}}><svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-4-4V7a4 4 0 014-4h10a4 4 0 014 4v5m-4 4h-5m5-4l-5 4m0 0l-5-4m5 4v-7" /></svg></FileUploader>
+        <div className="flex flex-col sm:flex-row gap-4 mt-4"><button onClick={() => setPage('summary')} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-slate-600 text-white hover:bg-slate-700">Bu Adımı Atla ve Devam Et</button></div>
     </div>
 );
+
+const CheckReturnsScreen = ({ setPage }) => (
+    <div className="max-w-3xl mx-auto w-full p-8 bg-white rounded-lg shadow-sm space-y-6 border">
+        <h1 className="text-3xl font-bold text-slate-800">Önemli Hatırlatma</h1>
+        <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded-md">
+            <h3 className="font-bold text-lg">Başka Kütüphaneler Tarafından İade Alınan Materyaller</h3>
+            <p className="mt-2">
+                "Başka Kütüphaneler Tarafından İade Alınan Materyallerim" alanını kontrol ederek, burada listelenen materyalleri de sayım listenize (örneğin toplu .txt yükleme ile) eklemeyi unutmayınız!
+            </p>
+            <a 
+                href="https://personel.ekutuphane.gov.tr/cgi-bin/koha/circ/dev_iademateryallerim.pl" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors"
+            >
+                İlgili Alana Ulaşmak İçin Tıklayınız
+            </a>
+        </div>
+        <button onClick={() => setPage('scan')} className="w-full font-bold py-3 px-4 rounded-md transition-colors bg-green-600 text-white hover:bg-green-700">
+            Anladım, Sayıma Başla
+        </button>
+    </div>
+);
+
 
 const SummaryScreen = ({ currentSessionName, summaryData, preAnalysisReports, postScanReports, isXlsxReady, isHtmlToImageReady }) => {
     const generalStatusRef = useRef(null);
@@ -2131,8 +2193,8 @@ const SummaryScreen = ({ currentSessionName, summaryData, preAnalysisReports, po
                 <ResponsiveContainer><BarChart data={summaryData.locationStatusData} margin={{ top: 20, right: 30, left: 20, bottom: 70 }}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="name" angle={-45} textAnchor="end" interval={0} /><YAxis /><Tooltip /><Legend verticalAlign="top" wrapperStyle={{ paddingBottom: 10 }}/><Bar dataKey="Geçerli" stackId="a" fill="#2ECC71" /><Bar dataKey="Uyarılı" stackId="a" fill="#FAD7A0" /><Bar dataKey="Eksik" stackId="a" fill="#95A5A6" /></BarChart></ResponsiveContainer>
             </div>
             <div className="mt-10">
-                <div className="mb-12"><h2 className="text-3xl font-bold mb-2 text-slate-800">Sayım Sonucu Raporları</h2><p className="text-slate-600 mb-6">Bu raporlar, sayım işlemi sırasında okutulan barkodlara göre oluşturulmuştur.</p><div className="space-y-4">{postScanReports.map(report => (<ReportCard key={report.id} report={report} isXlsxReady={isXlsxReady} />))}</div></div>
-                <div><h2 className="text-3xl font-bold mb-2 text-slate-800">Dosya Ön Analiz Raporları</h2><p className="text-slate-600 mb-6">Bu raporlar, sayım işleminden bağımsız olarak, yalnızca başlangıçta yüklediğiniz Koha dosyasına göre oluşturulmuştur.</p><div className="space-y-4">{preAnalysisReports.map(report => (<ReportCard key={report.id} report={report} isXlsxReady={isXlsxReady} />))}</div></div>
+                <div className="mb-12"><h2 className="text-3xl font-bold mb-2 text-slate-800">Sayım Sonucu Raporları</h2><p className="text-slate-600 mb-6">Bu raporlar, sayım işlemi sırasında okutulan barkodlara göre oluşturulmuştur.</p><div className="space-y-4">{postScanReports.map(report => (<ReportCard key={report.id} report={report} isReady={report.format === '.txt' ? true : isXlsxReady} />))}</div></div>
+                <div><h2 className="text-3xl font-bold mb-2 text-slate-800">Dosya Ön Analiz Raporları</h2><p className="text-slate-600 mb-6">Bu raporlar, sayım işleminden bağımsız olarak, yalnızca başlangıçta yüklediğiniz Koha dosyasına göre oluşturulmuştur.</p><div className="space-y-4">{preAnalysisReports.map(report => (<ReportCard key={report.id} report={report} isReady={isXlsxReady} />))}</div></div>
             </div>
         </div>
     );
@@ -2208,8 +2270,8 @@ const MergeScreen = () => {
 
     return (
         <div className="w-full">
-            <h1 className="text-3xl font-bold text-slate-800 mb-2">Ortak Düşüm Barkodlarını Bul</h1>
-            <p className="text-slate-600 mb-8">Farklı sayımlar sonucu oluşturulmuş "Düşüm İşlemi İçin Barkodlar (Eksikler)" dosyalarını (.txt) yükleyerek, <strong>tüm dosyalarda ortak olan</strong> barkodların listesini alın.</p>
+            <h1 className="text-3xl font-bold text-slate-800 mb-2">Sayım Karşılaştırma: Ortak Eksikleri Bul</h1>
+            <p className="text-slate-600 mb-8">Farklı bölümlerde (örn: Çocuk ve Yetişkin) yapılan sayımlar sonucu oluşan eksik listelerini (.txt) buraya yükleyerek karşılaştırın. Bu araç, tüm listelerde ortak olan, yani gerçekten kayıp olan materyalleri tespit ederek nihai düşüm listenizi oluşturmanızı sağlar.</p>
 
             <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
                 <h2 className="text-xl font-semibold mb-4 text-slate-700">Düşüm Dosyalarını Yükle</h2>
@@ -2252,6 +2314,7 @@ const MergeScreen = () => {
 
 
 export default function App() {
+    const isPapaParseReady = useScript('https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js', 'Papa');
     const isXlsxReady = useScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js', 'XLSX');
     const isQrCodeReady = useScript('https://unpkg.com/html5-qrcode', 'Html5Qrcode');
     const isHtmlToImageReady = useScript('https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js', 'htmlToImage');
@@ -2288,7 +2351,6 @@ export default function App() {
     const [isMuted, setIsMuted] = useState(false);
     const [installPrompt, setInstallPrompt] = useState(null);
     const [showInstallPopup, setShowInstallPopup] = useState(false);
-    const [isNavigatingToSummary, setIsNavigatingToSummary] = useState(false);
     const [isRestoringSession, setIsRestoringSession] = useState(false);
     
     const processedBarcodesRef = useRef(new Set());
@@ -2353,7 +2415,7 @@ export default function App() {
             if ((session.items || []).length > 0) { setLastScanned(session.items[0]); } else { setLastScanned(null); }
             setKohaData([]);
             setKohaDataMap(new Map());
-            setError(`"${sessionName}" oturumu yüklendi. Devam etmek için lütfen ilgili Koha sayım dosyasını (.xlsx) tekrar yükleyin.`);
+            setError(`"${sessionName}" oturumu yüklendi. Devam etmek için lütfen ilgili Koha sayım dosyasını (.csv) tekrar yükleyin.`);
             setPage('start');
             setIsRestoringSession(true);
         }
@@ -2440,16 +2502,28 @@ export default function App() {
     const combinedLibraries = useMemo(() => new Map(libraryOptions), [libraryOptions]);
     const combinedLocations = useMemo(() => new Map(locationOptions), [locationOptions]);
 
-    const handleExcelUpload = (file) => {
-        if (!file || !isXlsxReady) return;
+    const handleCsvUpload = (file) => {
+        if (!file || !isPapaParseReady) return;
         setIsLoading(true);
         setError('');
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const workbook = window.XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-                const json = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                if (json.length === 0 || !json[0].hasOwnProperty('barkod')) throw new Error("Yüklenen dosyada 'barkod' sütunu bulunamadı.");
+                const buffer = e.target.result;
+                const decoder = new TextDecoder('utf-8');
+                const csvText = decoder.decode(buffer);
+
+                const result = window.Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                });
+                
+                const json = result.data;
+
+                if (json.length === 0 || !result.meta.fields.includes('barkod')) {
+                    throw new Error("Yüklenen CSV dosyasında 'barkod' sütunu bulunamadı veya dosya boş.");
+                }
+
                 setKohaData(json);
                 setKohaDataMap(new Map(json.map(item => [String(item.barkod), item])));
                 if (isRestoringSession) { setError(''); setPage('scan'); setIsRestoringSession(false); }
@@ -2553,22 +2627,45 @@ export default function App() {
     const handleBulkUpload = useCallback((files) => {
         const file = files[0];
         if (!file) return;
-        setIsBulkLoading(true); setError(''); const reader = new FileReader(); const fileExtension = file.name.split('.').pop().toLowerCase();
+        setIsBulkLoading(true);
+        setError('');
+        const reader = new FileReader();
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+    
         reader.onload = (e) => {
             try {
                 let barcodes = [];
-                if (fileExtension === 'txt') { barcodes = e.target.result.split(/\r?\n/).filter(line => line.trim() !== ''); } 
-                else if (['xlsx', 'xls'].includes(fileExtension)) {
-                    if (!isXlsxReady) { setError("Excel kütüphanesi hazır değil."); setIsBulkLoading(false); return; }
-                    const workbook = window.XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-                    const json = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                if (fileExtension === 'txt') {
+                    const buffer = e.target.result;
+                    const decoder = new TextDecoder('utf-8');
+                    const textData = decoder.decode(buffer);
+                    barcodes = textData.split(/\r?\n/).filter(line => line.trim() !== '');
+                } else if (['xlsx', 'xls'].includes(fileExtension)) {
+                    if (!isXlsxReady) {
+                        setError("Excel kütüphanesi hazır değil.");
+                        setIsBulkLoading(false);
+                        return;
+                    }
+                    const workbook = window.XLSX.read(e.target.result, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const json = window.XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     barcodes = json.map(row => row[0]).filter(barcode => barcode != null && String(barcode).trim() !== '');
+                } else {
+                     throw new Error("Lütfen geçerli bir .txt veya .xlsx dosyası yükleyin.");
                 }
                 processBarcodesInChunks(barcodes);
-            } catch (err) { setError(`Toplu yükleme sırasında hata: ${err.message}`); setIsBulkLoading(false); }
+            } catch (err) {
+                setError(`Toplu yükleme sırasında hata: ${err.message}`);
+                setIsBulkLoading(false);
+            }
         };
-        reader.onerror = () => { setError("Dosya okuma başarısız oldu."); setIsBulkLoading(false); };
-        if (fileExtension === 'txt') { reader.readAsText(file); } else if (['xlsx', 'xls'].includes(fileExtension)) { reader.readAsArrayBuffer(file); } else { setError("Lütfen geçerli bir .txt veya .xlsx dosyası yükleyin."); setIsBulkLoading(false); }
+    
+        reader.onerror = () => {
+            setError("Dosya okuma başarısız oldu.");
+            setIsBulkLoading(false);
+        };
+        reader.readAsArrayBuffer(file);
     }, [isXlsxReady, processBarcodesInChunks]);
 
     const handleCameraScan = useCallback((decodedText) => {
@@ -2606,36 +2703,50 @@ export default function App() {
     
     const handleClearAllScans = () => { setConfirmationModal({ isOpen: true, message: "Okutulan tüm barkodları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.", onConfirm: () => { setScannedItems([]); processedBarcodesRef.current.clear(); setLastScanned(null); } }); };
     const handleManualEntry = (e) => { e.preventDefault(); if (barcodeInput) { if (manualInputDebounceRef.current) clearTimeout(manualInputDebounceRef.current); processBarcode(barcodeInput); setBarcodeInput(''); } };
-    
-    const handleOnLoanUpload = (files) => {
-        const file = files[0];
+
+    const handleOnLoanUpload = (file) => {
         if (!file) return;
-        setIsBulkLoading(true); setError(''); const reader = new FileReader(); const fileExtension = file.name.split('.').pop().toLowerCase();
+        setIsBulkLoading(true); 
+        setError(''); 
+        const reader = new FileReader(); 
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        
         reader.onload = (e) => {
             try {
                 let barcodes = [];
-                if (fileExtension === 'txt') { barcodes = e.target.result.split(/\r?\n/).filter(line => line.trim() !== ''); } 
-                else if (['xlsx', 'xls'].includes(fileExtension)) {
-                    if (!isXlsxReady) { setError("Excel kütüphanesi hazır değil."); setIsBulkLoading(false); return; }
-                    const workbook = window.XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-                    const json = window.XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
-                    barcodes = json.map(row => row[0]).filter(barcode => barcode != null && String(barcode).trim() !== '');
+                const buffer = e.target.result;
+                const decoder = new TextDecoder('utf-8');
+                const textData = decoder.decode(buffer);
+
+                if (fileExtension === 'txt') { 
+                    barcodes = textData.split(/\r?\n/).filter(line => line.trim() !== ''); 
+                } else if (fileExtension === 'csv') {
+                    if (!isPapaParseReady) { setError("CSV kütüphanesi hazır değil."); setIsBulkLoading(false); return; }
+                    const result = window.Papa.parse(textData, { skipEmptyLines: true });
+                    barcodes = result.data.map(row => row[0]).filter(barcode => barcode != null && String(barcode).trim() !== '');
                 }
                 const uploadedBarcodes = new Set(barcodes.map(b => String(b).trim().replace(/[^0-9]/g, '')).filter(Boolean));
                 const newScanResults = Array.from(uploadedBarcodes).map(barcode => { processedBarcodesRef.current.add(barcode); return { barcode, isValid: false, warnings: [WARNING_DEFINITIONS.onLoan], timestamp: new Date().toISOString() }; });
                 setScannedItems(prevItems => { const otherItems = prevItems.filter(item => !uploadedBarcodes.has(item.barcode)); return [...newScanResults, ...otherItems]; });
             } catch (err) { setError(`Güncel ödünç listesi işlenirken hata: ${err.message}`); } 
-            finally { setIsBulkLoading(false); setIsNavigatingToSummary(true); setTimeout(() => { setPage('summary'); setIsNavigatingToSummary(false); }, 1500); }
+            finally { setIsBulkLoading(false); setPage('summary'); }
         };
         reader.onerror = () => { setError("Dosya okuma başarısız oldu."); setIsBulkLoading(false); };
-        if (fileExtension === 'txt') reader.readAsText(file);
-        else if (['xlsx', 'xls'].includes(fileExtension)) reader.readAsArrayBuffer(file);
-        else { setError("Lütfen geçerli bir .txt veya .xlsx dosyası yükleyin."); setIsBulkLoading(false); }
+        reader.readAsArrayBuffer(file);
     };
 
     const filteredScannedItems = useMemo(() => scannedItems.filter(item => { const itemData = kohaDataMap.get(item.barcode); return (debouncedSearchTerm ? (item.barcode.includes(debouncedSearchTerm) || String(itemData?.['eser_adi'] || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase())) : true) && (warningFilter === 'all' ? true : item.warnings.some(w => w.id === warningFilter)) }), [scannedItems, debouncedSearchTerm, warningFilter, kohaDataMap]);
-    const downloadTxt = (data, filename) => { const blob = new Blob([data], { type: 'text/plain;charset=utf-8' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = filename; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); };
-    const downloadXlsx = (data, filename) => { if (!isXlsxReady) { alert("Excel kütüphanesi hazır değil."); return; } const ws = window.XLSX.utils.json_to_sheet(data); const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, ws, "Rapor"); window.XLSX.writeFile(wb, filename); };
+    
+    const downloadTxt = (data, filename) => { const blob = new Blob([data], { type: 'text/plain;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement('a'); link.href = url; link.download = filename; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); };
+    
+    const downloadXlsx = (data, filename) => {
+        if (!isXlsxReady) { alert("Excel kütüphanesi hazır değil."); return; }
+        const ws = window.XLSX.utils.json_to_sheet(data);
+        const wb = window.XLSX.utils.book_new();
+        window.XLSX.utils.book_append_sheet(wb, ws, "Rapor");
+        window.XLSX.writeFile(wb, filename);
+    };
+
     const PRE_ANALYSIS_REPORTS_CONFIG = useMemo(() => [
         { id: 'preOnLoan', title: 'Ödünçteki Materyaller', format: '.xlsx', icon: ICONS.onLoan, description: 'Koha verisine göre halihazırda bir okuyucunun üzerinde ödünçte görünen materyaller.', generator: () => { const data = kohaData.filter(i => String(i['odunc_durumu']) === '1'); downloadXlsx(transformReportData(data), `on_analiz_oduncteki_materyaller_${currentSessionName}.xlsx`); } },
         { id: 'preStatusIssues', title: 'Düşüm / Devir Statüsündeki Materyaller', format: '.xlsx', icon: ICONS.status, description: 'Koha verisine göre materyal statüsü "düşüm" veya "devir" gibi koleksiyon dışı bir durumu gösteren tüm materyaller.', generator: () => { const data = kohaData.filter(i => String(i['materyal_statusu_kodu']) !== '0'); downloadXlsx(transformReportData(data), `on_analiz_dusum_devir_statulu_${currentSessionName}.xlsx`); } },
@@ -2651,6 +2762,7 @@ export default function App() {
             } 
         },
     ], [kohaData, currentSessionName, isXlsxReady]);
+
     const POST_SCAN_REPORTS_CONFIG = useMemo(() => [ 
         { 
             id: 'writeOff', title: 'Düşüm İşlemi İçin Barkodlar (Eksikler)', format: '.txt', icon: ICONS.writeOff, description: "Bu dosya, Koha Materyal Düzeltme/Düşüm Modülü'ne yüklenerek materyallerin topluca düşümünü sağlar.", links: [{ text: 'Koha Düşüm Modülü', url: 'https://personel.ekutuphane.gov.tr/cgi-bin/koha/tools/batchMod.pl' }], notes: ['Sadece Müdür/Yönetici yetkisine sahip personel erişebilir.', 'Yetkisi olmayanlar koha@ktb.gov.tr adresinden talep edebilir.'], 
@@ -2673,15 +2785,16 @@ export default function App() {
         { id: 'duplicateScans', title: 'Tekrar Okutulan Barkodlar', format: '.xlsx', icon: ICONS.all, description: 'Sayım sırasında birden fazla kez okutulan tüm barkodların listesi. Bu rapor, hem koleksiyon listesinde olan hem de olmayan tekrar okutulmuş barkodları içerir.', generator: () => { const barcodeCounts = scannedItems.reduce((acc, item) => { acc[item.barcode] = (acc[item.barcode] || 0) + 1; return acc; }, {}); const duplicates = Object.entries(barcodeCounts).filter(([, count]) => count > 1).map(([barcode, count]) => { const itemData = kohaDataMap.get(barcode); const firstInstance = scannedItems.find(item => item.barcode === barcode); const wrongLibWarning = firstInstance.warnings.find(w => w.id === 'wrongLibrary'); return { 'Barkod': barcode, 'Tekrar Sayısı': count, 'Eser Adı': itemData?.['eser_adi'] || 'Bilinmiyor', 'Yer Numarası': itemData?.['yer_numarasi'] || '', 'Farklı Kütüphane Adı': wrongLibWarning?.libraryName || '' }; }); downloadXlsx(duplicates, `sayim_sonucu_tekrar_okutulanlar_${currentSessionName}.xlsx`); } }, { id: 'invalidStructure', title: '❗ Yapıya Uygun Olmayan Barkodlar (Okutulanlar)', format: '.xlsx', icon: ICONS.status, description: 'Sayım sırasında okutulan ve barkod yapısı bilinen hiçbir kütüphane koduna uymayan barkodlar.', generator: () => { const data = scannedItems.filter(i => i.warnings.some(w => w.id === 'invalidStructure')).map(i => ({ Hatalı_Barkod: i.barcode })); downloadXlsx(data, `sayim_sonucu_yapiya_uygun_olmayanlar_${currentSessionName}.xlsx`); } }, { id: 'deletedScanned', title: '❗ Listede Olmayan ve Sayımı Yapılan Barkodlar', format: '.xlsx', icon: ICONS.status, description: 'Sayım sırasında okutulan ancak Koha\'dan indirilen listede bulunamayan barkodlar (muhtemelen sistemden silinmiş veya hatalı girilmiş).', generator: () => { const data = scannedItems.filter(i => i.warnings.some(w => w.id === 'deleted' || w.id === 'autoCompletedNotFound')).map(i => ({ Barkod: i.barcode, 'Not': 'Okutuldu, listede bulunamadı' })); downloadXlsx(data, `sayim_sonucu_listede_olmayan_okutulanlar_${currentSessionName}.xlsx`); } }, { id: 'allResults', title: 'Tüm Sayım Sonuçları (Uyarılar Dahil)', format: '.xlsx', icon: ICONS.all, description: 'Sayım boyunca okutulan tüm materyallerin, aldıkları uyarılarla birlikte tam listesi.', generator: () => { const data = scannedItems.map(i => { const itemData = kohaDataMap.get(i.barcode); const wrongLibWarning = i.warnings.find(w => w.id === 'wrongLibrary'); const transformedKohaData = itemData ? transformReportData([itemData])[0] : {}; return { Barkod: i.barcode, 'Eser Adı': itemData?.['eser_adi'] || '', Uyarılar: i.warnings.map(w => w.message || w.text).join(', ') || 'Temiz', 'Farklı Kütüphane Adı': wrongLibWarning?.libraryName || '', ...transformedKohaData }; }); downloadXlsx(data, `sayim_sonucu_tum_sonuclar_${currentSessionName}.xlsx`); } }, { id: 'cleanList', title: 'Temiz Liste (Uyarısız Okutulanlar)', format: '.xlsx', icon: ICONS.clean, description: 'Sayım sırasında okutulan ve hiçbir uyarı almayan, durumu ve konumu doğru olan materyallerin listesi.', generator: () => { const data = scannedItems.filter(i => i.isValid).map(i => kohaDataMap.get(i.barcode)); downloadXlsx(transformReportData(data), `sayim_sonucu_temiz_liste_${currentSessionName}.xlsx`); } }, { id: 'wrongLibrary', title: 'Kütüphanenize Ait Olmayan ve Okutulan Barkodlar', format: '.xlsx', icon: ICONS.wrongLib, description: 'Sayım sırasında okutulan ancak sayım yapılan kütüphaneye ait olmayan (farklı şube koduna sahip) materyaller.', generator: () => { const data = scannedItems.filter(i => i.warnings.some(w => w.id === 'wrongLibrary')).map(i => { const wrongLibWarning = i.warnings.find(w => w.id === 'wrongLibrary'); return { 'Barkod': i.barcode, 'Ait Olduğu Kütüphane': wrongLibWarning?.libraryName || 'Bilinmiyor' }; }); downloadXlsx(data, `sayim_sonucu_kutuphane_disi_${currentSessionName}.xlsx`); } }, { id: 'locationMismatch', title: 'Yer Uyumsuzları (Okutulanlar)', format: '.xlsx', icon: ICONS.location, description: 'Sayım sırasında, başlangıçta seçilen lokasyon dışında bir yerde okutulan materyaller.', generator: () => { const data = scannedItems.filter(i => i.warnings.some(w => w.id === 'locationMismatch')).map(i => kohaDataMap.get(i.barcode)); downloadXlsx(transformReportData(data), `sayim_sonucu_yer_uyumsuz_${currentSessionName}.xlsx`); } }, ], [kohaData, scannedItems, currentSessionName, isXlsxReady, combinedLibraries, kohaDataMap]);
     const summaryData = useMemo(() => { if (kohaData.length === 0) return null; const STATUS_MAP = { '0': 'Eser Koleksiyonda', '1': 'Düşüm Yapıldı', '2': 'Devir Yapıldı' }; const materialStatusCounts = kohaData.reduce((acc, item) => { const statusName = STATUS_MAP[String(item['materyal_statusu_kodu'])] || `Bilinmeyen Statü (${item['materyal_statusu_kodu']})`; acc[statusName] = (acc[statusName] || 0) + 1; return acc; }, {}); const materialStatusPieData = Object.entries(materialStatusCounts).map(([name, value]) => ({ name, value })); const warningCounts = scannedItems.flatMap(item => item.warnings).reduce((acc, warning) => { acc[warning.id] = (acc[warning.id] || 0) + 1; return acc; }, {}); const warningBarData = Object.entries(warningCounts).map(([id, count]) => ({ name: WARNING_DEFINITIONS[id]?.text || id, Sayı: count })); const scanProgress = scannedItems.reduce((acc, item) => { const hour = new Date(item.timestamp).getHours().toString().padStart(2, '0') + ':00'; acc[hour] = (acc[hour] || 0) + 1; return acc; }, {}); const scanProgressData = Object.entries(scanProgress).map(([time, count]) => ({ time, 'Okutulan Sayısı': count })).sort((a,b) => a.time.localeCompare(b.time)); const topErrorLocations = scannedItems.filter(i => !i.isValid).reduce((acc, item) => { const itemData = kohaDataMap.get(item.barcode); const loc = itemData?.['materyalin_yeri_kodu'] || 'Bilinmeyen'; acc[loc] = (acc[loc] || 0) + 1; return acc; }, {}); const topErrorLocationsData = Object.entries(topErrorLocations).map(([name, count]) => ({ name, 'Hata Sayısı': count })).sort((a, b) => b['Hata Sayısı'] - a['Hata Sayısı']).slice(0, 10); let scanSpeed = 0; if(scannedItems.length > 1){ const firstScanTime = new Date(scannedItems[scannedItems.length - 1].timestamp).getTime(); const lastScanTime = new Date(scannedItems[0].timestamp).getTime(); const durationMinutes = (lastScanTime - firstScanTime) / (1000 * 60); scanSpeed = durationMinutes > 0 ? Math.round(scannedItems.length / durationMinutes) : "∞"; } const activeKohaData = kohaData.filter(item => String(item['materyal_statusu_kodu']) === '0'); const uniqueScannedItems = [...new Map(scannedItems.map(item => [item.barcode, item])).values()]; const activeScannedItems = uniqueScannedItems.filter(item => kohaDataMap.has(item.barcode) && String(kohaDataMap.get(item.barcode)['materyal_statusu_kodu']) === '0'); const valid = activeScannedItems.filter(item => item.isValid).length; const invalid = activeScannedItems.length - valid; const notScannedCount = activeKohaData.length - activeScannedItems.length; const pieData = [ { name: 'Geçerli', value: valid }, { name: 'Uyarılı', value: invalid }, { name: 'Eksik', value: notScannedCount > 0 ? notScannedCount : 0 } ]; const locationStatus = {}; activeKohaData.forEach(item => { const loc = item['materyalin_yeri_kodu'] || 'Bilinmeyen'; if(!locationStatus[loc]) locationStatus[loc] = { 'Geçerli': 0, 'Uyarılı': 0, 'Eksik': 0 }; }); activeScannedItems.forEach(item => { const itemData = kohaDataMap.get(item.barcode); const loc = itemData?.['materyalin_yeri_kodu'] || 'Bilinmeyen'; if(!locationStatus[loc]) locationStatus[loc] = { 'Geçerli': 0, 'Uyarılı': 0, 'Eksik': 0 }; if(item.isValid) locationStatus[loc]['Geçerli']++; else locationStatus[loc]['Uyarılı']++; }); const scannedActiveKohaBarcodes = new Set(activeScannedItems.map(i => i.barcode)); activeKohaData.forEach(item => { const loc = item['materyalin_yeri_kodu'] || 'Bilinmeyen'; if(!scannedActiveKohaBarcodes.has(String(item.barkod))) { locationStatus[loc]['Eksik']++; } }); const locationStatusData = Object.entries(locationStatus).map(([name, data]) => ({ name, ...data })); return { totalScanned: scannedItems.length, valid, invalid, notScannedCount, scanSpeed, pieData, warningBarData, scanProgressData, locationStatusData, topErrorLocationsData, materialStatusPieData }; }, [scannedItems, kohaData, kohaDataMap]);
     
-    const pageTitles = { start: 'Yeni Sayım', 'pre-reports': 'Ön Raporlar', scan: 'Sayım', 'update-on-loan': 'Güncel Ödünçleri Yükle', summary: 'Özet & Raporlar', permission: 'Kamera İzni', merge: 'Düşüm Birleştir' };
-    const MobileHeader = ({ onMenuClick, pageTitle }) => (<header className="md:hidden bg-white shadow-md p-4 flex items-center justify-between sticky top-0 z-20"><button onClick={onMenuClick} className="p-2 text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><h2 className="text-lg font-bold text-slate-800">{pageTitle}</h2><div className="w-8"></div></header>);
+    const pageTitles = { start: 'Yeni Sayım', 'pre-reports': 'Ön Raporlar', scan: 'Sayım', 'update-on-loan': 'Güncel Ödünçleri Yükle', 'check-returns': 'İade Kontrolü', summary: 'Özet & Raporlar', permission: 'Kamera İzni', merge: 'Eksik Dosyalarını Birleştir' };
+    const MobileHeader = ({ onMenuClick, pageTitle }) => (<header className="md:hidden bg-white shadow-md p-4 flex items-center justify-between sticky top-0 z-20"><button onClick={onMenuClick} className="p-2 text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button><h2 className="text-lg font-bold text-slate-800">{pageTitle}</h2><div className="w-8"></div></header>);
     const renderPageContent = () => {
         switch (page) {
-            case 'start': return <StartScreen {...{ sessions, sessionNameInput, setSessionNameInput, startNewSession, error, setError, loadSession, deleteSession, selectedLibrary, setSelectedLibrary, libraryOptions, setAddDataModal, selectedLocation, setSelectedLocation, locationOptions, kohaData, handleExcelUpload, isXlsxReady, isLoading }} />;
+            case 'start': return <StartScreen {...{ sessions, sessionNameInput, setSessionNameInput, startNewSession, error, setError, loadSession, deleteSession, selectedLibrary, setSelectedLibrary, libraryOptions, setAddDataModal, selectedLocation, setSelectedLocation, locationOptions, kohaData, handleCsvUpload, isPapaParseReady, isLoading }} />;
             case 'pre-reports': return <PreReportsScreen {...{ currentSessionName, error, setPage, preAnalysisReports: PRE_ANALYSIS_REPORTS_CONFIG, isXlsxReady }} />;
-            case 'update-on-loan': return <UpdateOnLoanScreen {...{ handleOnLoanUpload, setPage, isXlsxReady, isLoading: isBulkLoading || isNavigatingToSummary }} />;
+            case 'update-on-loan': return <UpdateOnLoanScreen {...{ handleOnLoanUpload, setPage, isPapaParseReady, isLoading: isBulkLoading }} />;
+            case 'check-returns': return <CheckReturnsScreen setPage={setPage} />;
             case 'summary': return <SummaryScreen {...{ currentSessionName, summaryData, preAnalysisReports: PRE_ANALYSIS_REPORTS_CONFIG, postScanReports: POST_SCAN_REPORTS_CONFIG, isXlsxReady, isHtmlToImageReady }} />;
-            case 'scan': return <ScanScreen {...{ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraOpen, handleCameraScan, warningModal, currentSessionName, combinedLibraries, selectedLibrary, combinedLocations, selectedLocation, barcodeInput, handleBarcodeInput, handleManualEntry, lastScanned, handleBulkUpload, isBulkLoading, setPage, scannedItems, filteredScannedItems, searchTerm, setSearchTerm, warningFilter, setWarningFilter, handleDeleteItem, handleClearAllScans, fileUploaderKey, kohaDataMap }} />;
+            case 'scan': return <ScanScreen {...{ isCameraOpen, isQrCodeReady, isCameraAllowed, setIsCameraOpen, handleCameraScan, warningModal, currentSessionName, combinedLibraries, selectedLibrary, combinedLocations, selectedLocation, barcodeInput, handleBarcodeInput, handleManualEntry, lastScanned, handleBulkUpload, isBulkLoading, setPage, scannedItems, filteredScannedItems, searchTerm, setSearchTerm, warningFilter, setWarningFilter, handleDeleteItem, handleClearAllScans, fileUploaderKey, kohaDataMap, isXlsxReady }} />;
             case 'merge': return <MergeScreen />;
             default: return null;
         }
@@ -2689,7 +2802,6 @@ export default function App() {
     
     return (
         <div className="font-sans">
-            {isNavigatingToSummary && <FullScreenLoader text="Özet & Raporlar Ekranına Geçiliyor..." />}
             {isBulkLoading && <FullScreenLoader text="Toplu Barkodlar Yükleniyor..." progress={bulkProgress} />}
             {isLoading && <FullScreenLoader text="Koha dosyası okunuyor, lütfen bekleyin..." />}
             <WarningModal isOpen={warningModal.isOpen} onClose={() => setWarningModal({ isOpen: false, title: '', warnings: [], barcode: null })} {...warningModal} />
@@ -2707,4 +2819,6 @@ export default function App() {
         </div>
     );
 }
+
+
 
