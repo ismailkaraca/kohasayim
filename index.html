@@ -1,32 +1,15 @@
-<!doctype html>
-<html lang="tr"> <!-- DİLİ TÜRKÇE OLARAK İŞARETLEDİK -->
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- Google Translate önerisini engelle -->
-    <meta name="google" content="notranslate" />
-    <!-- Arama motorlarına sayfanın dilini net belirt -->
-    <meta http-equiv="Content-Language" content="tr" />
-
-    <title>
-      Koha Sayım Uygulaması (T.C. Kültür ve Turizm Bakanlığı - Kütüphaneler ve Yayımlar Genel Müdürlüğü'ne bağlı kütüphaneler için geliştirilmiştir.)
-      Geliştiren: İsmail KARACA (ismailkaraca.com.tr)
-    </title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-<!-- Ybug code start (https://ybug.io) -->
-<script type='text/javascript'>
-(function() {
-    window.ybug_settings = {"id":"0qpd1aqtzqaf10brkxkt"};
-    var ybug = document.createElement('script'); ybug.type = 'text/javascript'; ybug.async = true;
-    ybug.src = 'https://widget.ybug.io/button/'+window.ybug_settings.id+'.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ybug, s);
-})();
-</script>
-<!-- Ybug code end -->
-  </body>
-</html>
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>EAN-13 Sayım Kontrolü</title><style>
+body{font-family:system-ui;margin:0;background:#f5f7f9;color:#17212b}.w{max-width:1100px;margin:auto;padding:28px 16px}.p{background:white;border:1px solid #dfe5ea;border-radius:16px;padding:18px;margin:16px 0}.drop{border:2px dashed #9aa8b5;border-radius:14px;padding:30px;text-align:center;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.c{background:white;border:1px solid #dfe5ea;border-radius:12px;padding:12px}.c b{display:block;font-size:22px}.muted{color:#657382}.bad{color:#b42318}.warn{color:#b54708}.ok{color:#067647}.info{color:#175cd3}button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer;margin:5px;background:#0f766e;color:white}.secondary{background:#e9eef2;color:#24313d}input{padding:10px;border:1px solid #ccd5dd;border-radius:9px}.tw{overflow:auto;max-height:420px;border:1px solid #e2e7eb;border-radius:10px}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:9px 10px;border-bottom:1px solid #edf0f2;text-align:left}th{position:sticky;top:0;background:#f8fafb}.mono{font-family:ui-monospace,monospace}@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style></head><body><div class="w"><h1>EAN-13 Sayım Barkod Kontrolü</h1><p class="muted">13 haneli EAN-13 barkodlarını doğrular, son kontrol hanesini kaldırır, tekrarları ve hataları ayıklar; yalnızca tekil 12 haneli kayıtları indirir.</p>
+<div class="p"><label>Beklenen ön ek: <input id="prefix" value="171300" inputmode="numeric"></label><div id="drop" class="drop"><b>TXT/TXD dosyasını buraya bırak veya seç</b><br><br><button id="pick">Dosya Seç</button><input id="file" type="file" accept=".txt,.txd,text/plain" hidden></div><p id="fi" class="muted"></p></div>
+<div id="r" hidden><div class="grid"><div class="c"><span>Toplam</span><b id="total">0</b></div><div class="c"><span>Geçerli EAN-13</span><b id="valid" class="ok">0</b></div><div class="c"><span>Hatalı</span><b id="invalid" class="bad">0</b></div><div class="c"><span>Tekrar grubu</span><b id="dg" class="warn">0</b></div><div class="c"><span>Tekrarlı satır</span><b id="dl" class="warn">0</b></div><div class="c"><span>Nihai tekil</span><b id="final" class="info">0</b></div></div>
+<div class="p"><h2>Hatalı / farklı satırlar</h2><div class="tw"><table><thead><tr><th>Satır</th><th>Değer</th><th>Temizlenmiş</th><th>Sorun</th></tr></thead><tbody id="eb"></tbody></table></div></div>
+<div class="p"><h2>Tekrar eden kayıtlar</h2><p class="muted">Tekrarlar 13. kontrol hanesi kaldırıldıktan sonraki 12 haneli değer üzerinden hesaplanır. Tekrar grubundaki kayıtların tamamı nihai listeden çıkarılır.</p><div class="tw"><table><thead><tr><th>12 haneli değer</th><th>Adet</th><th>Ana dosya satırları</th><th>Orijinal EAN-13</th></tr></thead><tbody id="db"></tbody></table></div></div>
+<div class="p"><h2>Nihai çıktı</h2><p id="sum"></p><button id="down">Nihai TXT İndir</button><button id="err" class="secondary">Hata CSV</button><button id="dup" class="secondary">Tekrar CSV</button></div></div></div>
+<script>
+const $=id=>document.getElementById(id), CTRL=/[\u0000-\u0009\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200D\u2060\uFEFF]/g, SP=/[\s\u00A0]+/g;let A=null,name='sayim.txt',text='';
+function clean(s){return s.replace(CTRL,'').replace(SP,'')}function cd(x){let s=0;for(let i=0;i<12;i++)s+=+x[i]*(i%2?3:1);return String((10-s%10)%10)}function validEan(x){return /^\d{13}$/.test(x)&&cd(x.slice(0,12))===x[12]}
+function analyze(t){let p=$('prefix').value.replace(/\D/g,'').slice(0,12);$('prefix').value=p;let ls=t.replace(/\r\n?/g,'\n').split('\n'),errors=[],cand=[],non=0;for(let i=0;i<ls.length;i++){let raw=ls[i],c=clean(raw);if(!c)continue;non++;let reason='';if(!/^\d+$/.test(c))reason='Rakam dışında karakter içeriyor';else if(c.length!==13)reason=`${c.length} haneli (13 olmalı)`;else if(p&&!c.startsWith(p))reason=`Ön ek farklı (beklenen ${p})`;else if(!validEan(c))reason=`EAN-13 kontrol hanesi hatalı (beklenen ${cd(c.slice(0,12))})`;if(reason)errors.push({line:i+1,raw,c,reason});else cand.push({line:i+1,ean:c,d:c.slice(0,12)})}let m=new Map;for(const x of cand){if(!m.has(x.d))m.set(x.d,[]);m.get(x.d).push(x)}let dups=[],final=[];for(const [d,a] of m){if(a.length>1)dups.push({d,count:a.length,lines:a.map(x=>x.line),eans:[...new Set(a.map(x=>x.ean))]});else final.push(d)}dups.sort((a,b)=>a.lines[0]-b.lines[0]);return{non,errors,cand,dups,dupLines:dups.reduce((s,x)=>s+x.count,0),final}}
+function render(){A=analyze(text);$('r').hidden=false;$('total').textContent=A.non;$('valid').textContent=A.cand.length;$('invalid').textContent=A.errors.length;$('dg').textContent=A.dups.length;$('dl').textContent=A.dupLines;$('final').textContent=A.final.length;$('eb').innerHTML=A.errors.map(e=>`<tr><td>${e.line}</td><td class="mono">${esc(e.raw)}</td><td class="mono">${esc(e.c)}</td><td class="bad">${esc(e.reason)}</td></tr>`).join('')||'<tr><td colspan="4">Hata yok.</td></tr>';$('db').innerHTML=A.dups.map(d=>`<tr><td class="mono">${d.d}</td><td>${d.count}</td><td>${d.lines.join(', ')}</td><td class="mono">${d.eans.join(', ')}</td></tr>`).join('')||'<tr><td colspan="4">Tekrar yok.</td></tr>';$('sum').textContent=`${A.errors.length} hatalı satır ve ${A.dups.length} tekrar grubundaki ${A.dupLines} satır çıkarıldı. Nihai listede ${A.final.length} adet tekil 12 haneli kayıt var.`}function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}function dl(c,f,type='text/plain;charset=utf-8'){let u=URL.createObjectURL(new Blob([c],{type})),a=document.createElement('a');a.href=u;a.download=f;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}function csv(rows){return '\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n')}
+$('pick').onclick=e=>{e.stopPropagation();$('file').click()};$('drop').onclick=()=>$('file').click();$('file').onchange=async()=>{let f=$('file').files[0];if(!f)return;name=f.name;text=await f.text();$('fi').textContent=`${name} • ${(f.size/1024).toFixed(1)} KB`;render()};$('drop').ondragover=e=>e.preventDefault();$('drop').ondrop=async e=>{e.preventDefault();let f=e.dataTransfer.files[0];if(!f)return;name=f.name;text=await f.text();$('fi').textContent=name;render()};$('prefix').oninput=()=>text&&render();$('down').onclick=()=>A&&dl(A.final.join('\n'),name.replace(/\.[^.]+$/,'')+'_NIHAI_12_HANE.txt');$('err').onclick=()=>A&&dl(csv([['Satır','Değer','Temizlenmiş','Sorun'],...A.errors.map(e=>[e.line,e.raw,e.c,e.reason])]),'hata_raporu.csv','text/csv;charset=utf-8');$('dup').onclick=()=>A&&dl(csv([['12 haneli değer','Adet','Satırlar','Orijinal EAN-13'],...A.dups.map(d=>[d.d,d.count,d.lines.join(', '),d.eans.join(', ')])]),'tekrar_raporu.csv','text/csv;charset=utf-8');
+</script></body></html>
