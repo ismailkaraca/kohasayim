@@ -1,12 +1,16 @@
-# React + Vite
+# EAN-13 Sayım Barkod Kontrolü
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Tek dosyalık, tarayıcı içinde çalışan web uygulaması.
 
-Currently, two official plugins are available:
+## Kurallar
+- Ana dosyadaki gerçek boş satırlar tespit edilir, sayılır ve satır numaraları gösterilir.
+- Satırlar boşluk ve görünmeyen kontrol karakterlerinden temizlenir.
+- Kayıt 13 rakam olmalıdır; herhangi bir ön ek şartı aranmaz.
+- EAN-13 kontrol hanesi matematiksel olarak doğrulanır.
+- Geçerli EAN-13 kaydın son kontrol hanesi silinir ve ilk 12 hane esas alınır.
+- Tekrarlar bu 12 haneli değer üzerinden gruplanır.
+- Aynı 12 haneli değer birden fazla satırda varsa, grubun tüm örnekleri nihai listeden çıkarılır.
+- Tekrar raporunda tekrar sayısı ve ana dosyadaki satır numaraları gösterilir.
+- Nihai TXT dosyasında yalnızca tekil, tam 12 haneli değerler bulunur; boş satır, boşluk veya sonda fazladan satır sonu yoktur.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+`index.html` dosyasını Chrome, Edge veya Firefox ile açmak yeterlidir. Dosya sunucuya yüklenmez.
